@@ -1,15 +1,78 @@
 <!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>前端学习笔记の亲手实现订阅发布EventEmitter | 中二の雷</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.4.0"></head><link rel="stylesheet" type="text/css" href="/plugins/highlight/atom-one-dark.min.css"><script type="text/javascript" src="/plugins/highlight/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();
 </script><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">中二の雷</a></h1></div><p class="m-desc">心之所向，无惧无悔,<br>愿求仁得仁，复无怨怼！</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">前端学习笔记の亲手实现订阅发布EventEmitter</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2019/07/03/1/">2019-07-03</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><p>想要手动实现一个发布订阅功能的EventEmitter，我第一时间想到了vue组件之间的，监听派发事件，那我就借用vue的一些方法名（#嘻嘻，起名困难症），来自己尝试逐步实现一个EventEmitter，最后也放到vue里面去测试一下。<br>首先，我应该先给我得EventEmitter的构造函数，搞出个架子，</p>
-<pre><code class="bash">function EventEmitter () &#123;
-   this.event = &#123;&#125;;
-&#125;
-EventEmitter.prototype.on = function (eventName, call) &#123;
-        
-&#125;
-EventEmitter.prototype.emit = function (eventName) &#123;
-        
-&#125;
+<pre><code class="bash">    function EventEmitter () &#123;
+       this.event = &#123;&#125;;
+    &#125;
+    EventEmitter.prototype.on = function (eventName, call) &#123;
+            
+    &#125;
+    EventEmitter.prototype.emit = function (eventName) &#123;
+            
+    &#125;
 </code></pre>
+<p>好吧，暂时先这样，既然我需要实现能够发布事件也能够订阅事件，那至少应该维护一个局部变量来存储这些，事件名和执行这些事件相关的东西，所以先设置一个this.event为一个空对象。<br>    接着先简单实现订阅部分的逻辑代码，顾名思义订阅，就像订阅微信公众号一样，公众号发布一个消息，订阅的人就可以收到这个消息，我这里的订阅就是要告诉EventEmitter我订阅的事件名是什么，而且我收到这个事件发布消息的时候，要执行的代码是什么，所以on方法，接受的两个参数，分别是订阅的事件名和要执行的函数function，当EvnetEmitter收到参数之后就要开始维护收到的数据了。维护数据时，其实就是把事件名作为我之前的局部对象的键名来存储，先判断是不是已经存在this.event[eventName]，如果已经存在说明维护过，所以直接把当前收到的回调方法放到对应事件的数组也可以称之为事件队列中去，没有的话说明之前没有维护过，那就重新维护一个事件队列来使用，如下：</p>
+<pre><code class="bash">    EventEmitter.prototype.on = function (eventName, call) &#123;
+        if (this.event[eventName]) &#123;
+            this.event[eventName].push(call);
+        &#125; else &#123;
+            this.event[eventName] = [call];
+        &#125;
+    &#125;
+</code></pre>
+<p>然后，也简单实现一下发布事件，发布事件就是传入一个自定义的事件名，然后检查一下之前有没有订阅过这个事件，如果订阅过，就把对应的事件队列一一执行，如下：</p>
+<pre><code class="bash">    EventEmitter.prototype.emit = function (eventName) &#123;
+        if (this.event[eventName]) &#123;
+            this.event[eventName].callBack.forEach(fn =&gt; &#123;
+                fn();
+            &#125;,this);
+        &#125;
+    &#125;
+</code></pre>
+<p>现在，就好多了，我们终于实现了，避免掉先后调用的问题都可以触发了，感觉空气都变的清新了，有木有（#雾霾的小伙伴关一下窗户），要告诉自己已经很不错了，虽然用了点脑细胞。不过，还是不够完美，现在只能发一个事件，我是想发事件的时候，还要传参数呀，不然我发着玩么，所以要带上参数，加油搞定它。<br>    这里可以说是很简单，就是在emit的时候，可以多发几个参数，并且，把这些参数记录下来，维护到事件数据中去，当订阅回调触发时，重新传回就好了，这里唯一要特别说的是，使用了es6的扩展运算符…，用于在不确定参数个数的情况时，可以方便快捷的传递参数，用起来超爽的，代码如下修改：</p>
+<pre><code class="bash">    EventEmitter.prototype.on = function (eventName, call) &#123;
+        if (this.event[eventName]  &amp;&amp; this.event[eventName].callBack) &#123;
+            this.event[eventName].callBack.push(call);
+        &#125; else if (!this.event[eventName]) &#123;
+            this.event[eventName] = &#123;&#125;;
+            this.event[eventName].callBack = [call];
+        &#125; else if (this.event[eventName] &amp;&amp; !this.event[eventName].callBack) &#123;
+            this.event[eventName].callBack = [];
+            this.event[eventName].callBack.push(call);
+            this.event[eventName].callBack.forEach(fn =&gt; &#123;
+                fn(...this.event[eventName].args);
+            &#125;,this);
+        &#125;
+    &#125;
+    EventEmitter.prototype.emit = function (eventName,...args) &#123;
+        if (this.event[eventName] &amp;&amp; this.event[eventName].callBack) &#123;
+            this.event[eventName].callBack.forEach(fn =&gt; &#123;
+                fn(...args);
+            &#125;,this);
+        &#125; else &#123;
+            this.event[eventName] = &#123;&#125;;
+            this.event[eventName].args = args;
+        &#125;
+    &#125;
+</code></pre>
+<p>这次终于完成了吧，可以传参数了，感觉和vue的emit好像呀（#废话你不就是照着vue的功能模仿的么），但是好像还缺点啥，我的天，这次真的要怪我，我还是这么丢三落四，有订阅至少也做个取消订阅的off方法吧，太大意了。T.T好想休息呀，但是再坚持一下，既然都做到这了，那不能行百里半九十。<br>    最后的off方法，就是接受一个事件名和一个之前绑定过的function，进行一次判断，如果当前的事件数据存在，且也传递了fn那么就把当前事件中的事件队列，过滤掉fn，保留下其他的，从而解除掉当前回调方法对事件的订阅，代码如下：</p>
+<pre><code class="bash">    EventEmitter.prototype.off = function (eventName,fn) &#123;
+        if (fn) &#123;
+            if (this.event[eventName])&#123;
+                this.event[eventName].callBack = this.event[eventName].callBack.filter(call=&gt;&#123;
+                    if (call === fn) &#123;
+                        return false;
+                    &#125;
+                    return true;
+                &#125;) 
+            &#125;
+        &#125; else &#123;
+            if (this.event[eventName])&#123;
+                delete this.event[eventName]
+            &#125;
+        &#125;
+    &#125;
+</code></pre>
+<p>到此处，今天要实现的EventEmitter便算是全部完成了，先别管代码写的是不是优美高大上，我觉得至少思路是不错的嘛，这样也还好吧（#瞬间降低对自己的要求），然后，我们作为一个随便的人，就随便的建一个vue项目，随便的测一测啦。vue等下能简陋到让你哭，弄了两个组件，left和right，并且先实例化了我们自制的EventEmitter类并导入，分别在left组件的mounted钩子里，向我们的EventEmitter实例emit了一个test事件，并且点击left组件中的按钮，也可以触发emit，right组件的mounted钩子里，订阅on了test事件，当收到test事件的发布消息后，就会打印出来接受到的参数，right组件中的按钮可以取消订阅off，测试一下取消订阅了之后，再emit就不会触发回调函数了。</p>
 </div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">wanglei</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2019/07/03/1/">https://zhong3rlei.github.io/2019/07/03/1/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="https://zhong3rlei.github.io">wanglei的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav></nav></aside></div><section class="p-ext"><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
 .night .v[data-class=v] a:hover { color: #216C73 !important; }
 .night .v[data-class=v] li { list-style: inherit; }
