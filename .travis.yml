@@ -17,4 +17,4 @@ deploy:
     branch: master
   local-dir: public
 install:
-  - npm install
+  - yarn
