@@ -18,4 +18,4 @@ deploy:
   local-dir: public
 install:
   - npm install
-  - npm run generate:gh-pages
+  - npm run generate #:gh-pages
