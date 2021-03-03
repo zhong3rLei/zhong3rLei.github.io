@@ -5,12 +5,24 @@
 # Site
 title: 中二の雷
 subtitle: ''
-description: ''
-keywords:
+description: '心之所向，素履以往，生如逆旅，一苇以航。'
+keywords: 'web前端'
 author: wanglei
 language: en
 timezone: ''
 
+##valine
+valine: ## https://valine.js.org
+  enable: true ## If you want to use Valine comment system, please set the value to true.
+  appid:  pRBBL2JR4N7kLEGojrF0MsSs-gzGzoHsz ## Your LeanCloud application App ID, e.g. pRBBL2JR4N7kLEGojrF0MsSs-gzGzoHsz
+  appkey: tjczHpDfhjYDSYddzymYK1JJ ## Your LeanCloud application App Key, e.g. tjczHpDfhjYDSYddzymYK1JJ
+  lang: zh-cn ## Language, e.g. zh-cn, en
+  notify: false ## Mail notifier, see https://github.com/xCss/Valine/wiki/Valine-评论系统中的邮件提醒设置
+  verify: false ## Validation code.
+  placeholder: "ヾﾉ≧∀≦)o 高谈阔论一下吧..." ## Comment box placeholders.
+  avatar: 'identicon' ## Gravatar type, see https://github.com/xCss/Valine/wiki/avatar-setting-for-valine
+  pageSize: 10 ## Number of comments per page.
+  guest_info: nick,mail,link ## Attributes of reviewers.
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
 url: https://zhong3rlei.github.io/
