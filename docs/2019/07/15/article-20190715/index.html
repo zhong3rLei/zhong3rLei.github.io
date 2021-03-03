@@ -1,0 +1,192 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="心之所向，素履以往，生如逆旅，一苇以航。"><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>前端笔记-Promise | 中二の雷</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.4.0"></head><link rel="stylesheet" type="text/css" href="/plugins/highlight/atom-one-dark.min.css"><script type="text/javascript" src="/plugins/highlight/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();
+</script><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">中二の雷</a></h1></div><p class="m-desc">心之所向，无惧无悔,<br>愿求仁得仁，复无怨怼！</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">前端笔记-Promise</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2019/07/15/article-20190715/">2019-07-15</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><p>前几天，在工作中碰到了一个，需要异步遍历的问题，就是我需要遍历获取一堆图片的宽高，还要在全都获取完成后，把他们的数据都存下来，再去进行一些操作，于是就使用了Promise，简直太太好用啦。把你要执行的异步操作遍历存储成一个promise的数组，然后用Promise.all执行他们就能完美的获取到，这些数据了。<br>   <br>超级方便，于是我就突发奇想，打算自己动手实现一下Promise。好的，那么由于我是一个菜13，什么标准、规范、权威，在我这个自由的灵魂面前，统统仍然还是贼特喵重要的（#怂）~好吧，总得来说，我就先按照自己的想法实现一下Promise的基本功能，甭管做的好坏，先搞出来一个意思。<br>     <br>先简单写出这样一个架子，我就按照这样来实现后续功能，</p>
+<pre><code class="bash">    function MyPromise (fn) &#123;
+        fn &amp;&amp; fn();
+        return &#123;
+            then (fn) &#123;
+                
+            &#125;,
+            catch (fn) &#123;
+                
+            &#125;
+        &#125;;;
+    &#125;
+</code></pre>
+<p>我的MyPromise包含着，一个then和catch方法，用来对应Promise中成功和失败的回调，然后回想Promise中在传入的异步操作中，调用Promise内部的resolve和reject方法，来完成异步Promise，所以我也需要涉及内部的resolve和reject方法。那么明确resolve函数的作用是什么，是用于当异步操作正确完成时，触发then中传入的成功回调，所以整个逻辑流程应该是：<strong>then方法收集所需要的成功回调 （可以事先收集多个）——把收集到的回调函数存入一个内部数组变量中———异步操作正确完成时，将成功回调函数全部执行，并传入异步操作的返回值</strong>。catch和reject函数同理，只不过是处理的失败的回调。<br>   <br>那么利用这个思路，我改写一下代码：</p>
+<pre><code class="bash">    function MyPromise (fn) &#123;
+        var success = [], error = [];
+        function _resolve (res) &#123;
+            if (success.length &gt; 0) &#123;
+                success.forEach(fn =&gt; &#123;
+                    fn(res)
+                &#125;)
+            &#125;
+        &#125;
+        function _reject (err) &#123;
+            if (error.length &gt; 0) &#123;
+                error.forEach(fn =&gt; &#123;
+                    fn(err);
+                &#125;)
+            &#125;
+        &#125;
+        fn &amp;&amp; fn(_resolve,_reject);
+        return &#123;
+            then (fn) &#123;
+                fn &amp;&amp; success.push(fn);
+            &#125;,
+            catch (fn) &#123;
+                fn &amp;&amp; error.push(fn);
+            &#125;
+        &#125;;;
+    &#125;
+</code></pre>
+<p>这样就实现了上面的逻辑，非常的简单。当resolve函数执行的时候，实际上是把内部的success数组遍历执行，并且从异步操作中传入的返回值res，再次传入收集的回调函数中去。接下来，我希望能过够让我的这个MyPromise能够方便的链式调用，就像MyPromise.then().catch()，所以再做出一个简单的改变，在then和catch方法中return this。<br>   <br>下面就是我们自己完成的整个MyPromise，感觉特别简单呐，也没有很费劲：</p>
+<pre><code class="bash">    function MyPromise (fn) &#123;
+        var success = [], error = [];
+        function _resolve (res) &#123;
+            if (success.length &gt; 0) &#123;
+                success.forEach(fn =&gt; &#123;
+                    fn(res)
+                &#125;)
+            &#125;
+        &#125;
+        function _reject (err) &#123;
+            if (error.length &gt; 0) &#123;
+                error.forEach(fn =&gt; &#123;
+                    fn(err);
+                &#125;)
+            &#125;
+        &#125;
+        fn &amp;&amp; fn(_resolve,_reject);
+        return &#123;
+            then (fn) &#123;
+                fn &amp;&amp; success.push(fn);
+                return this;
+            &#125;,
+            catch (fn) &#123;
+                fn &amp;&amp; error.push(fn);
+                return this;
+            &#125;
+        &#125;;;
+    &#125;
+
+    let promise = MyPromise((resolve, reject) =&gt; &#123;
+        //这里放入我们要执行的函数，可能是同步，也可能是异步, 这里我们就来写一个异步的执行
+        console.log(0)
+        setTimeout(() =&gt; &#123;
+            resolve(&#39;hello&#39;);
+        &#125;, 2000)
+    &#125;)
+    promise.then(data =&gt; &#123;
+        console.log(data);
+    &#125;)
+</code></pre>
+<p>测试了一下好用，但是于此同时，上网搜索了一下，网上的前端大佬们是如何实现的，发现完全不一样，当然流程上的大方向思路还是差不多的，但是写了很多东西，下面放一个网上查来的例子：</p>
+<pre><code class="bash">        //公共变量，用于标识MyPromise实例
+        index = 0;
+        //promise接收一个回调函数fn,有两个参数，reslove,reject
+        function MyPromise(fn) &#123;
+            var _this = this;
+            //promise的三种状态
+            this.RESOLVE = &quot;fullfilled&quot;;
+            this.PENDING = &quot;pending&quot;;
+            this.REJECT = &quot;reject&quot;;
+            this.id = index++;
+            //初始默认状态为penddding
+            this.state = this.PENDING;
+            //执行任务列表
+            this.taskList = [];
+            //最终执行的回调
+            this.finallyCallback = null;
+            //bind改变reslove/reject函数体内this的指向，确保指向MyPromise
+            fn.call(this, this.resolve.bind(this), this.reject.bind(this));
+        &#125;
+        MyPromise.prototype.resolve = function(value) &#123;
+            this.state = this.RESOLVE;
+            //2、状态变更时，执行完成的方法
+            this.taskList[this.id] &amp;&amp; this.handler(this.taskList[this.id], value);
+        &#125;;
+        MyPromise.prototype.reject = function(value) &#123;
+            this.state = this.REJECT;
+            //2、状态变更时，执行完成的方法
+            this.taskList[this.id] &amp;&amp; this.handler(this.taskList[this.id], value);
+        &#125;;
+        //执行任务回调
+        MyPromise.prototype.handler = function(task, value) &#123;
+            var result = null;
+            if (this.state === this.RESOLVE) &#123;
+                result = task.onFullFilled(value);
+            &#125; else if (this.state === this.REJECT) &#123;
+                result = task.onReject(value);
+            &#125;
+            var nextId = this.id + 1;
+            //需要判断返回值是不是MyPromise实例，如果是，将之前的任务队列赋值给新的MyPromise实例
+            if (result instanceof MyPromise) &#123;
+                result.id = nextId;
+                result.taskList = this.taskList;
+                result.finallyCallback = this.finallyCallback;
+            &#125; else &#123;
+                //没有返回MyPromise实例
+                //如果有finally回调，则执行最终的回调
+                this.finallyCallback &amp;&amp; this.finallyCallback();
+            &#125;
+        &#125;;
+        //onFullFilled：成功的回调，onReject：失败的回调
+        MyPromise.prototype.then = function(onFullFilled, onReject) &#123;
+            var _this = this,
+                obj = &#123;
+                    onFullFilled: onFullFilled,
+                    onReject: onReject
+                &#125;;
+            //1、初始化时，将后续可能要执行的任务推送到执行任务队列中
+            if (this.state === this.PENDING) &#123;
+                this.taskList.push(obj);
+            &#125;
+            //返回一个promise，支持链式调用
+            return this;
+        &#125;;
+        //最终执行的方法,不管MyPromise的状态如何
+        MyPromise.prototype.finally = function(callback) &#123;
+            this.finallyCallback = callback;
+        &#125;;
+</code></pre>
+<p>可以看出他使用的是<strong>构造函数</strong>和<strong>原型链</strong>实现的Promise功能，这样实现的好处，其实我也想不到很全面，但是我感觉主要是，可以让自己实现的MyPromise具有类型，比如我们实例化var a = new MyPromise(()=&gt;{});然后console.log(a instanceof MyPromise)，这样就会得到true也就是可以判断Mypromise的实例是MyPromise类型的，相当于自己造了一个类型，而我上面简单实现的只能判断出是Object类型。</p>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">中二の雷</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2019/07/15/article-20190715/">https://zhong3rlei.github.io/2019/07/15/article-20190715/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="https://zhong3rlei.github.io">中二の雷的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2021/07/24/article-20190724/">&lt; 前端笔记-exif.js 处理图片翻转问题</a><a class="next" href="/2019/07/15/article-1/">前端笔记-Set、WeakSet、Map、WeakMap &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//cdn.bootcdn.net/ajax/libs/valine/1.4.14/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'',
+  appKey:'',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o Come on, say something...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2021 <a href="/." rel="nofollow">中二の雷</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>
