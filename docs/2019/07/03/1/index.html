@@ -73,6 +73,54 @@
     &#125;
 </code></pre>
 <p>到此处，今天要实现的EventEmitter便算是全部完成了，先别管代码写的是不是优美高大上，我觉得至少思路是不错的嘛，这样也还好吧（#瞬间降低对自己的要求），然后，我们作为一个随便的人，就随便的建一个vue项目，随便的测一测啦。vue等下能简陋到让你哭，弄了两个组件，left和right，并且先实例化了我们自制的EventEmitter类并导入，分别在left组件的mounted钩子里，向我们的EventEmitter实例emit了一个test事件，并且点击left组件中的按钮，也可以触发emit，right组件的mounted钩子里，订阅on了test事件，当收到test事件的发布消息后，就会打印出来接受到的参数，right组件中的按钮可以取消订阅off，测试一下取消订阅了之后，再emit就不会触发回调函数了。</p>
+<p>最后贴出全部代码：</p>
+<pre><code class="bash">    function EventEmitter () &#123;
+        this.event = &#123;&#125;;
+    &#125;
+    EventEmitter.prototype.on = function (eventName, call) &#123;
+        if (this.event[eventName]  &amp;&amp; this.event[eventName].callBack) &#123;
+            this.event[eventName].callBack.push(call);
+        &#125; else if (!this.event[eventName]) &#123;
+            this.event[eventName] = &#123;&#125;;
+            this.event[eventName].callBack = [call];
+            this.event[eventName].emit = false;
+        &#125; else if (this.event[eventName] &amp;&amp; this.event[eventName].emit) &#123;
+            this.event[eventName].emit = false;
+            this.event[eventName].callBack = [];
+            this.event[eventName].callBack.push(call);
+            this.event[eventName].callBack.forEach(fn =&gt; &#123;
+                fn(...this.event[eventName].args);
+            &#125;,this);
+        &#125;
+    &#125;
+    EventEmitter.prototype.emit = function (eventName,...args) &#123;
+        if (this.event[eventName] &amp;&amp; this.event[eventName].callBack) &#123;
+            this.event[eventName].callBack.forEach(fn =&gt; &#123;
+                fn(...args);
+            &#125;,this);
+        &#125; else &#123;
+            this.event[eventName] = &#123;&#125;;
+            this.event[eventName].emit = true;
+            this.event[eventName].args = args;
+        &#125;
+    &#125;
+    EventEmitter.prototype.off = function (eventName,fn) &#123;
+        if (fn) &#123;
+            if (this.event[eventName])&#123;
+                this.event[eventName].callBack = this.event[eventName].callBack.filter(call=&gt;&#123;
+                    if (call === fn) &#123;
+                        return false;
+                    &#125;
+                    return true;
+                &#125;) 
+            &#125;
+        &#125; else &#123;
+            if (this.event[eventName])&#123;
+                delete this.event[eventName]
+            &#125;
+        &#125;
+    &#125;
+</code></pre>
 </div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">wanglei</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2019/07/03/1/">https://zhong3rlei.github.io/2019/07/03/1/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="https://zhong3rlei.github.io">wanglei的博客</a>！</span></div></blockquote></div></article><div class="p-info box"></div><aside id="toc"><div class="toc-title">目录</div><nav></nav></aside></div><section class="p-ext"><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
 .night .v[data-class=v] a:hover { color: #216C73 !important; }
 .night .v[data-class=v] li { list-style: inherit; }
