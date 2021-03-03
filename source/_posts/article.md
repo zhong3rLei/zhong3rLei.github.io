@@ -1,7 +1,7 @@
 ---
 title: 前端笔记-js位运算
 date: 2019-07-11 14:09:22
-tags:
+tags: javascript
 ---
 
 看到一个大厂面试题：

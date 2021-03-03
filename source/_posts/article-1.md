@@ -1,7 +1,7 @@
 ---
 title: 前端笔记-Set、WeakSet、Map、WeakMap
 date: 2019-07-15 14:12:19
-tags:
+tags: es6
 ---
 
 ### 1.Set
