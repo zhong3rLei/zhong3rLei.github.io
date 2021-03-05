@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="心之所向，素履以往，生如逆旅，一苇以航。"><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>前端笔记-函数防抖和节流 | 中二の雷</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.4.0"></head><link rel="stylesheet" type="text/css" href="/plugins/highlight/atom-one-dark.min.css"><script type="text/javascript" src="/plugins/highlight/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();
+</script><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">中二の雷</a></h1></div><p class="m-desc">这是我写笔记的地方~</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">前端笔记-函数防抖和节流</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2019/11/01/article-20191101/">2019-11-01</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/%E5%89%8D%E7%AB%AF%E7%AC%94%E8%AE%B0/">前端笔记</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><p>今天笔记一下函数防抖和节流的理解，和一例在实际工作中，函数防抖的应用。<br>       首先从字面意思上理解一下防抖和节流，首先说明一下防抖和节流的场景是比较类似的，都是一种大量快速触发的场景中的不同应对策略。<br>       <strong>防抖</strong>，顾名思义是在防止什么东西，说明我们需求上不需要他“抖”，所以尽可能让他看上去不抖了就好，所以防抖的场景是类似于，比如，页面滚动事件，当滚动开始时，事件监听器就一直不断的回调，这个时候，可能你不想要每次滚动都去执行一些操作，只要第一次发生滚动，告诉我页面开始滚动啦就好，那这时候就应该做防抖处理。<br>       而<strong>节流</strong>，字面表达是节约什么，也就是说我们不是不需要了，而是不需要那么多那么频繁，这样对我们更方便一些，所以节流，就还是用滚动事件做比方，比如我们在滚动发生的时候，想要每隔几秒钟执行一个操作，并不需要每次监听到滚动都执行，那么这个时候就是节流。</p>
+<hr>
+<p>那么下面就记录一个工作中使用到防抖的情况，场景接上一篇笔记，需求大致如下：</p>
+<p>1.目前我有一个弹出框，显示在界面上，弹出框具有最大化和还原功能，调整窗口大小<br>2.弹框里面用于显示一个数据列表，带有分页，弹框内部要保证没有滚动条，所以数据需要根据窗口大小动态调整<br>3.最大最小化的时候使用的过渡动画</p>
+<p>所以呢，我现在需要在动画结束后去执行一些操作调整弹窗内部的数据列表，那么就需要获取到最大化或还原完成的时机。</p>
+<pre><code class="bash">function debounce (call) &#123;
+    var _call = call;
+    var num;
+    var store = [];
+    return &#123;
+        call (data) &#123;
+            if (store.length &gt;=20) &#123;
+                store.shift();
+                store.push(data);
+            &#125; else &#123;
+                store.push(data);
+            &#125;
+            let dic = &#123;&#125;
+            for (let k in store)&#123;
+                if (!dic[store[k]])&#123;dic[store[k]] = [k]&#125;
+                else&#123;dic[store[k]][1] = k&#125;
+            &#125;
+            for (let k in dic)&#123;if (dic[k].length==1)&#123;delete(dic[k])&#125;&#125;
+            let keys = Object.keys(dic)
+            for (let i = 0; i &lt; keys.length; i++) &#123;
+                if (dic[keys[i]][1] - dic[keys[i]][0] &gt;= 19 &amp;&amp; num != keys[i]) &#123;
+                    _call &amp;&amp; _call(keys[i]);
+                    num = keys[i];
+                &#125;
+            &#125;
+            
+            
+        &#125;,
+        destroy () &#123;
+            num = null;
+            _call = null;
+        &#125;
+    &#125;
+&#125;
+</code></pre>
+<p>思路就是，首先创建一个闭包，并且将我们想要在监听的尺寸变化完成时要执行的函数传入，也就是标橙色的call，然后定义的两个变量，num和store都是用于记录和标识的，主要先指定一个防抖的规则，比如我这里就制定，当输入重复20次一样之后，就认定为一次输入结束了，所以闭包暴露了一个call方法，这个方法就是用于不停输入的，call方法内部虽然有很多判断很多遍历，但是都是用于判断当前是否有连续的20次同样的输入，如果达成这个条件就代表已经取到我们想要的时机了，这个时候执行之前传入的回调函数即可。</p>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">中二の雷</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2019/11/01/article-20191101/">https://zhong3rlei.github.io/2019/11/01/article-20191101/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="https://zhong3rlei.github.io">中二の雷的博客</a>！</span></div></blockquote></div></article><div class="p-info box"><span class="p-tags"><i class="fa fa-tag"></i><a href="/tags/javascript/">javascript</a></span></div><aside id="toc"><div class="toc-title">目录</div><nav></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="next" href="/2019/10/21/article-20191021/">前端笔记-监听dom元素的宽高属性变化 &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//cdn.bootcdn.net/ajax/libs/valine/1.4.14/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'cbc5SYShhjiiGtgHY4AqK3QF-gzGzoHsz',
+  appKey:'YFnKsXSSIUGX0byoEFpe92C5',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o 尽情吐槽吧...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2021 <a href="/." rel="nofollow">中二の雷</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>
