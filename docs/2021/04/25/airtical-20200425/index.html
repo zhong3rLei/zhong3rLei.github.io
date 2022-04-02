@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="心之所向，素履以往，生如逆旅，一苇以航。"><meta name="theme-color" content="#2d4356"><meta name="baidu-site-verification"><title>前端笔记-js小数运算精度问题 | 中二の雷</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script><meta name="generator" content="Hexo 5.4.0"></head><link rel="stylesheet" type="text/css" href="/plugins/highlight/atom-one-dark.min.css"><script type="text/javascript" src="/plugins/highlight/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();
+</script><script type="text/javascript" src="/js/ready.js" async></script><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"><body class="night"><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">中二の雷</a></h1></div><p class="m-desc">这是我写笔记的地方~</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">归档</a></li><li><span class="dot">●</span><a href="/categories/">分类</a></li><li><span class="dot">●</span><a href="/tags/">标签</a></li><li><span class="dot">●</span><a href="/about/">关于</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="搜索" onfocus="if(this.value=='搜索'){this.value='';}" onblur="if(this.value==''){this.value='搜索';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">前端笔记-js小数运算精度问题</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2021/04/25/airtical-20200425/">2021-04-25</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/%E5%89%8D%E7%AB%AF%E7%AC%94%E8%AE%B0/">前端笔记</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><p>下面我们来说一下浮点数运算产生误差的原因：（拿0.1+0.2=0.30000000000000004进行举例）。<br>首先，我们要站在计算机的角度思考 0.1 + 0.2 这个看似小儿科的问题。我们知道，能被计算机读懂的是二进制，而不是十进制，所以我们先把 0.1 和 0.2 转换成二进制看看：  <br>0.1 =&gt; 0.0001 1001 1001 1001…（无限循环）<br>0.2 =&gt; 0.0011 0011 0011 0011…（无限循环）  <br>上面我们发现0.1和0.2转化为二进制之后，变成了一个无限循环的数字，这在现实生活中，无限循环我们可以理解，但计算机是不允许无限循环的，对于无限循环的小数，计算机会进行舍入处理。进行双精度浮点数的小数部分最多支持 52 位，所以两者相加之后得到这么一串 0.0100 1100 1100 1100 1100 1100 1100 1100 1100 1100 1100 1100 1100 ，因浮点数小数位的限制而截断的二进制数字，这时候，我们再把它转换为十进制，就成了 0.30000000000000004。</p>
+<pre><code class="bash">var floatObj = function () &#123;
+/*
+* 判断obj是否为一个整数
+*/
+function isInteger(obj) &#123;
+    return Math.floor(obj) === obj
+&#125;
+/*
+* 将一个浮点数转成整数，返回整数和倍数。如 3.14 &gt;&gt; 314，倍数是 100
+* @param floatNum &#123;number&#125; 小数
+* @return &#123;object&#125;
+* &#123;times:100, num: 314&#125;
+*/
+function toInteger(floatNum) &#123;
+    var ret = &#123;times: 1, num: 0&#125;;
+    if (isInteger(floatNum)) &#123;
+        ret.num = floatNum;
+        return ret
+    &#125;
+    var strfi = floatNum + &#39;&#39;;
+    var dotPos = strfi.indexOf(&#39;.&#39;);
+    var len = strfi.substr(dotPos + 1).length;
+    var times = Math.pow(10, len);
+    var intNum = parseInt(floatNum * times + 0.5, 10);
+    ret.times = times;
+    ret.num = intNum;
+    return ret
+&#125;
+/*
+* 核心方法，实现加减乘除运算，确保不丢失精度
+* 思路：把小数放大为整数（乘），进行算术运算，再缩小为小数（除）
+*
+* @param a &#123;number&#125; 运算数1
+* @param b &#123;number&#125; 运算数2
+* @param op &#123;string&#125; 运算类型，有加减乘除（add/subtract/multiply/divide）
+*
+*/
+function operation(a, b, op) &#123;
+    var o1 = toInteger(a);
+    var o2 = toInteger(b);
+    var n1 = o1.num;
+    var n2 = o2.num;
+    var t1 = o1.times;
+    var t2 = o2.times;
+    var max = t1 &gt; t2 ? t1 : t2;
+    var result = null;
+    switch (op) &#123;
+        case &#39;add&#39;:
+            if (t1 === t2) &#123; // 两个小数位数相同
+                result = n1 + n2
+            &#125; else if (t1 &gt; t2) &#123; // o1 小数位 大于 o2
+                result = n1 + n2 * (t1 / t2)
+            &#125; else &#123; // o1 小数位 小于 o2
+                result = n1 * (t2 / t1) + n2
+            &#125;
+            return result / max;
+        case &#39;subtract&#39;:
+            if (t1 === t2) &#123;
+                result = n1 - n2
+            &#125; else if (t1 &gt; t2) &#123;
+                result = n1 - n2 * (t1 / t2)
+            &#125; else &#123;
+                result = n1 * (t2 / t1) - n2
+            &#125;
+            return result / max;
+        case &#39;multiply&#39;:
+            result = (n1 * n2) / (t1 * t2);
+            return result;
+        case &#39;divide&#39;:
+            result = (n1 / n2) * (t2 / t1);
+            return result
+    &#125;
+&#125;
+// 加减乘除的四个接口
+function add(a, b) &#123;
+    return operation(a, b, &#39;add&#39;)
+&#125;
+function subtract(a, b) &#123;
+    return operation(a, b, &#39;subtract&#39;)
+&#125;
+function multiply(a, b) &#123;
+    return operation(a, b, &#39;multiply&#39;)
+&#125;
+function divide(a, b) &#123;
+    return operation(a, b, &#39;divide&#39;)
+&#125;
+// exports
+return &#123;
+    add: add,
+    subtract: subtract,
+    multiply: multiply,
+    divide: divide
+&#125;
+&#125;();
+</code></pre>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">中二の雷</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2021/04/25/airtical-20200425/">https://zhong3rlei.github.io/2021/04/25/airtical-20200425/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="https://zhong3rlei.github.io">中二の雷的博客</a>！</span></div></blockquote></div></article><div class="p-info box"><span class="p-tags"><i class="fa fa-tag"></i><a href="/tags/javascript/">javascript</a></span></div><aside id="toc"><div class="toc-title">目录</div><nav></nav></aside></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2021/04/25/airtical-20200509/">&lt; 前端笔记-vue 路由的hash模式和history模式</a><a class="next" href="/2021/04/25/airtical-20200611/">前端笔记-IOS的xcode模拟器，webview中使用Date相关的性能问 &gt;</a></div><div id="valine-comment"><style type="text/css">.night .v[data-class=v] a { color: #0F9FB4 !important; }
+.night .v[data-class=v] a:hover { color: #216C73 !important; }
+.night .v[data-class=v] li { list-style: inherit; }
+.night .v[data-class=v] .vwrap { border: 1px solid #223441; border-radius: 0; }
+.night .v[data-class=v] .vwrap:hover { box-shadow: 0 0 6px 1px #223441; }
+.night .v[data-class=v] .vbtn { border-radius: 0; background: none; }
+.night .v[data-class=v] .vlist .vcard .vh { border-bottom-color: #293D4E; }
+.night .v[data-class=v] .vwrap .vheader .vinput { border-bottom-color: #223441; }
+.night .v[data-class=v] .vwrap .vheader .vinput:focus { border-bottom-color: #339EB4; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre,.night .v[data-class=v] .vlist .vcard .vhead .vsys { background: #203240 !important; }
+.night .v[data-class=v] code, .night .v[data-class=v] pre { color: #F0F0F0; font-size: 95%; }
+.v[data-class=v] .vcards .vcard .vh {border-bottom-color: #223441; }
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:before {background: linear-gradient(180deg,rgba(38,57,73,.4),rgba(38,57,73,.9));}
+.night .v[data-class=v] .vcards .vcard .vcontent.expand:after {background: rgba(38,57,73,.9)}
+</style><div id="vcomment"></div><script src="//cdn.bootcdn.net/ajax/libs/valine/1.4.14/Valine.min.js"></script><script>var notify = 'false' == true ? true : false;
+var verify = 'false' == true ? true : false;
+var GUEST_INFO = ['nick','mail','link'];
+var guest_info = 'nick,mail,link'.split(',').filter(function(item){
+  return GUEST_INFO.indexOf(item) > -1
+});
+guest_info = guest_info.length == 0 ? GUEST_INFO :guest_info;
+window.valine = new Valine({
+  el:'#vcomment',
+  notify:notify,
+  verify:verify,
+  appId:'cbc5SYShhjiiGtgHY4AqK3QF-gzGzoHsz',
+  appKey:'YFnKsXSSIUGX0byoEFpe92C5',
+  lang: 'zh-cn',
+  placeholder:'ヾﾉ≧∀≦)o 尽情吐槽吧...',
+  avatar:'identicon',
+  guest_info:guest_info,
+  pageSize:'10'
+})</script></div></section><footer><p>Copyright © 2016 - 2022 <a href="/." rel="nofollow">中二の雷</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script></body></html>
