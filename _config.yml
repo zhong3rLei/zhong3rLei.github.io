@@ -102,7 +102,9 @@ theme: snark
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
-  type: ''
+  type: git
+  repo: https://github.com/zhong3rLei/zhong3rLei.github.io # 码云仓库
+  branch: master
 
 search:
     path: search.xml
